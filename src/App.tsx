@@ -875,7 +875,7 @@ export default function App() {
         });
       } else if (streamParam.startsWith('vdo-ninja:')) {
         const token = streamParam.replace(/^vdo-ninja:room-|^vdo-ninja:whip-|^vdo-ninja:/, '');
-        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&cleanoutput=1&transparent=1&autostart=1&nocontrols=1&hideheader=1&nodirectorvideo=1`;
+        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&autostart=1&cleanoutput=1&transparent=0&nocontrols=1`;
         setActiveStream({
           id: streamParam,
           platform: 'vdo-ninja',

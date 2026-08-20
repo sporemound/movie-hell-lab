@@ -51,7 +51,7 @@ export function getVdoNinjaViewerUrl(options: VdoNinjaViewerOptions): string {
     autostart: '1',
     autoplay: options.autoplay !== false ? '1' : '0',
     cleanoutput: options.cleanOutput !== false ? '1' : '0',
-    transparent: '1',
+    transparent: '0',
     nocontrols: '1',
   });
 

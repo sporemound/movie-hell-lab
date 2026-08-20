@@ -190,7 +190,7 @@ export function streamEmbedUrl(stream: StreamListing): string {
         if (!parsed.searchParams.has('autostart')) parsed.searchParams.set('autostart', '1');
         if (!parsed.searchParams.has('autoplay')) parsed.searchParams.set('autoplay', '1');
         if (!parsed.searchParams.has('cleanoutput')) parsed.searchParams.set('cleanoutput', '1');
-        if (!parsed.searchParams.has('transparent')) parsed.searchParams.set('transparent', '1');
+        parsed.searchParams.set('transparent', '0');
         if (!parsed.searchParams.has('nocontrols')) parsed.searchParams.set('nocontrols', '1');
         parsed.searchParams.delete('chroma');
         parsed.searchParams.delete('darkmode');
@@ -201,7 +201,7 @@ export function streamEmbedUrl(stream: StreamListing): string {
       }
     }
     const token = (stream.channel || stream.id || 'moviehell_test').replace(/^vdo-ninja:room-|^vdo-ninja:whip-|^vdo-ninja:/, '');
-    return `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&cleanoutput=1&transparent=1&autostart=1&nocontrols=1`;
+    return `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&cleanoutput=1&transparent=0&autostart=1&nocontrols=1`;
   }
 
   if (stream.platform === 'mock') {
