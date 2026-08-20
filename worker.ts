@@ -1599,9 +1599,12 @@ async function assertRoomAccess(env: Env, userId: number, roomId: string): Promi
   const room = await env.DB.prepare("SELECT id FROM rooms WHERE id = ?").bind(roomId).first<{ id: string }>();
   if (!room) {
     const formattedName = roomId.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-    await env.DB.prepare("INSERT OR IGNORE INTO rooms (id, name, description, created_at) VALUES (?, ?, ?, ?)")
-      .bind(roomId, formattedName, "Cinema Screening Room", Date.now())
-      .run();
+    await env.DB.batch([
+      env.DB.prepare("INSERT OR IGNORE INTO rooms (id, name, description, created_at) VALUES (?, ?, ?, ?)")
+        .bind(roomId, formattedName, "Cinema Screening Room", Date.now()),
+      env.DB.prepare("INSERT OR IGNORE INTO canvas_state (room_id, version, updated_at) VALUES (?, 1, ?)")
+        .bind(roomId, Date.now()),
+    ]);
   }
   const ban = await env.DB.prepare("SELECT 1 AS banned FROM room_bans WHERE room_id = ? AND user_id = ?")
     .bind(roomId, userId).first<{ banned: number }>();
@@ -3582,7 +3585,7 @@ export class ChatRoom extends DurableObject<Env> {
     const nextRefillAt = (Math.floor(now / 86400000) + 1) * 86400000;
     const hoursRemaining = Math.max(1, Math.ceil((nextRefillAt - now) / 3600000));
 
-    const [state, strokes] = await Promise.all([
+    let [state, strokes] = await Promise.all([
       this.env.DB.prepare("SELECT version FROM canvas_state WHERE room_id = ?")
         .bind(roomId).first<{ version: number }>(),
       this.env.DB.prepare(`
@@ -3594,10 +3597,14 @@ export class ChatRoom extends DurableObject<Env> {
         LIMIT ?
       `).bind(roomId, cutoff24h, MAX_CANVAS_STROKES * 5).all<CanvasStrokeRow>(),
     ]);
-    if (!state) throw new Error("Canvas state is unavailable");
+    if (!state) {
+      await this.env.DB.prepare("INSERT OR IGNORE INTO canvas_state (room_id, version, updated_at) VALUES (?, 1, ?)")
+        .bind(roomId, now).run();
+      state = { version: 1 };
+    }
     return {
       epoch: state.version,
-      strokes: strokes.results.reverse().map(canvasStrokeView),
+      strokes: (strokes?.results ?? []).reverse().map(canvasStrokeView),
       refillTimestamp: nextRefillAt,
       hoursRemaining,
     };
