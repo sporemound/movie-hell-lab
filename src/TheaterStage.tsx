@@ -862,15 +862,8 @@ const isKickStream =
     if (activeStream && activeStream.status !== 'offline') {
       const isNewStream = prevStreamIdRef.current !== activeStream.id;
       prevStreamIdRef.current = activeStream.id;
-      setStreamLoaded(false);
 
-      // Keep curtains closed during initial connection / buffering to avoid white flashes
-      if (isNewStream) {
-        setCurtainState('closed');
-      }
-
-      // Settle video/iframe in pure black behind curtains before opening
-      const settleTimer = window.setTimeout(() => {
+      if (curtainState === 'closed' || isNewStream) {
         setStreamLoaded(true);
         setCurtainState('opening');
         setAnnouncement(`Curtains opening for ${activeStream.name} on ${activeStream.platform}`);
@@ -878,12 +871,9 @@ const isKickStream =
 
         const openTimer = window.setTimeout(() => {
           setCurtainState('open');
-        }, 1300);
-      }, 1500);
-
-      return () => {
-        window.clearTimeout(settleTimer);
-      };
+        }, 800);
+        return () => window.clearTimeout(openTimer);
+      }
     } else {
       prevStreamIdRef.current = null;
       setStreamLoaded(false);
