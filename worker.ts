@@ -2041,65 +2041,96 @@ type GiphyGifItem = {
   height: number;
 };
 
+const CURATED_CINEMA_GIFS: GiphyGifItem[] = [
+  { id: "3o7aCSPqXE5C6T8tBC", title: "Cinema Popcorn Munch", previewUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/giphy.gif", width: 480, height: 270 },
+  { id: "l0MYRzcWP7cONUT72", title: "Midnight Horror Screaming", previewUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/200w.gif", mediaUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/giphy.gif", width: 480, height: 270 },
+  { id: "l2Je2M4Nfrit0L7sQ", title: "Cult Classic Shock", previewUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/200w.gif", mediaUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/giphy.gif", width: 480, height: 270 },
+  { id: "xT9IgzoKnwFNmISR8I", title: "Standing Ovation Applause", previewUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/200w.gif", mediaUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif", width: 480, height: 270 },
+  { id: "3o7TKRBB3E7OI1WKYo", title: "Film Noir Stare", previewUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/giphy.gif", width: 480, height: 270 },
+  { id: "26ufdipQqU2lhNA4g", title: "Mind Blown Cinema", previewUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/200w.gif", mediaUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif", width: 480, height: 270 },
+  { id: "3o85xGocUH8RY0Fbhm", title: "Cinema Gasps in Fear", previewUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/200w.gif", mediaUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/giphy.gif", width: 480, height: 270 },
+  { id: "l0HlvtIPzPdt2usKs", title: "Classic Action Jump", previewUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif", width: 480, height: 270 },
+  { id: "d31w24psGYeekC6o", title: "Auteur Director Cut", previewUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/200w.gif", mediaUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/giphy.gif", width: 480, height: 270 },
+  { id: "l0HlPtb345MCH2lbW", title: "Giallo Murder Mystery", previewUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/giphy.gif", width: 480, height: 270 },
+  { id: "3o6Zt481isNVuQI1l6", title: "Wild Screaming Chaos", previewUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/200w.gif", mediaUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif", width: 480, height: 270 },
+  { id: "26xBwdIuRJiAIprV6", title: "Cult B-Movie Laser", previewUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/200w.gif", mediaUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/giphy.gif", width: 480, height: 270 },
+  { id: "3o7qDQ4kcSD1PLM3VS", title: "Theater Lights Out", previewUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/giphy.gif", width: 480, height: 270 },
+  { id: "3o7TKSjRrfIPjeiVyM", title: "Velvet Curtain Closes", previewUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif", width: 480, height: 270 },
+  { id: "3o7TKMEJJKqJuENNT2", title: "Intense Film Reel Smoke", previewUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/giphy.gif", width: 480, height: 270 },
+  { id: "l0HlQXkhxUp516VWU", title: "Midnight Creature Roar", previewUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/giphy.gif", width: 480, height: 270 },
+];
+
 async function fetchGiphy(
   env: Env,
   endpoint: "search" | "trending",
   params: Record<string, string>,
 ): Promise<Response> {
-  const apiKey = (env as any).GIPHY_API_KEY || "dc6zaTOxFJmzC";
-  const searchParams = new URLSearchParams({
-    api_key: apiKey,
-    rating: "r",
-    limit: "24",
-    lang: "en",
-    ...params,
-  });
+  const apiKey = (env as any).GIPHY_API_KEY || "";
+  const query = (params.q || "").toLowerCase().trim();
 
-  const url = `https://api.giphy.com/v1/gifs/${endpoint}?${searchParams.toString()}`;
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "MovieHell/2.0",
-      },
+  if (apiKey) {
+    const searchParams = new URLSearchParams({
+      api_key: apiKey,
+      rating: "r",
+      limit: "24",
+      lang: "en",
+      ...params,
     });
 
-    if (!res.ok) {
-      return json({ ok: false, error: `Giphy API error: ${res.status}` }, res.status >= 500 ? 502 : res.status);
+    const url = `https://api.giphy.com/v1/gifs/${endpoint}?${searchParams.toString()}`;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "MovieHell/2.0",
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json<{
+          data?: Array<{
+            id: string;
+            title: string;
+            images?: {
+              fixed_height?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
+              fixed_width_small?: { url?: string; webp?: string; width?: string; height?: string };
+              original?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
+            };
+          }>;
+        }>();
+
+        const gifs: GiphyGifItem[] = (data.data || []).map((item) => {
+          const fixed = item.images?.fixed_height || item.images?.original;
+          const small = item.images?.fixed_width_small || item.images?.fixed_height;
+          return {
+            id: item.id,
+            title: (item.title || "Cinema GIF").replace(/ GIF.*$/i, "").trim(),
+            previewUrl: small?.webp || small?.url || `https://media.giphy.com/media/${item.id}/200w.gif`,
+            mediaUrl: fixed?.webp || fixed?.url || `https://media.giphy.com/media/${item.id}/giphy.gif`,
+            mp4Url: fixed?.mp4,
+            width: Number(fixed?.width) || 200,
+            height: Number(fixed?.height) || 200,
+          };
+        });
+
+        const response = json({ ok: true, gifs });
+        response.headers.set("Cache-Control", "public, max-age=60, s-maxage=60");
+        return response;
+      }
+    } catch {
+      // Fall through to curated fallback catalog
     }
-
-    const data = await res.json<{
-      data?: Array<{
-        id: string;
-        title: string;
-        images?: {
-          fixed_height?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
-          fixed_width_small?: { url?: string; webp?: string; width?: string; height?: string };
-          original?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
-        };
-      }>;
-    }>();
-
-    const gifs: GiphyGifItem[] = (data.data || []).map((item) => {
-      const fixed = item.images?.fixed_height || item.images?.original;
-      const small = item.images?.fixed_width_small || item.images?.fixed_height;
-      return {
-        id: item.id,
-        title: (item.title || "Cinema GIF").replace(/ GIF.*$/i, "").trim(),
-        previewUrl: small?.webp || small?.url || `https://media.giphy.com/media/${item.id}/200w.gif`,
-        mediaUrl: fixed?.webp || fixed?.url || `https://media.giphy.com/media/${item.id}/giphy.gif`,
-        mp4Url: fixed?.mp4,
-        width: Number(fixed?.width) || 200,
-        height: Number(fixed?.height) || 200,
-      };
-    });
-
-    const response = json({ ok: true, gifs });
-    response.headers.set("Cache-Control", "public, max-age=60, s-maxage=60");
-    return response;
-  } catch {
-    return json({ ok: false, error: "Failed to reach Giphy service." }, 502);
   }
+
+  // Graceful curated fallback catalog
+  const filtered = query
+    ? CURATED_CINEMA_GIFS.filter((g) => g.title.toLowerCase().includes(query) || query.split(/\s+/).some((w) => g.title.toLowerCase().includes(w)))
+    : CURATED_CINEMA_GIFS;
+
+  const gifs = filtered.length > 0 ? filtered : CURATED_CINEMA_GIFS;
+  const response = json({ ok: true, gifs, fallback: true });
+  response.headers.set("Cache-Control", "public, max-age=60, s-maxage=60");
+  return response;
 }
 
 async function searchGiphy(request: Request, env: Env, url: URL): Promise<Response> {

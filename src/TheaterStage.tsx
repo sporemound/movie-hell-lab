@@ -264,6 +264,29 @@ export default function TheaterStage({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [streamLoaded, setStreamLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [volume, setVolume] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('mh_theater_volume');
+      if (saved !== null) {
+        const parsed = Number(saved);
+        if (!Number.isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+          return parsed;
+        }
+      }
+      return 100;
+    } catch {
+      return 100;
+    }
+  });
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('mh_theater_muted');
+      return saved !== null ? saved === 'true' : false;
+    } catch {
+      return false;
+    }
+  });
+
   const [projectorFit, setProjectorFit] = useState<'contain' | 'cover'>(() => {
     try {
       return (localStorage.getItem('mh_projector_fit') as 'contain' | 'cover') || 'contain';
@@ -284,7 +307,101 @@ export default function TheaterStage({
   const prevStreamIdRef = useRef<string | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+
+  // Cross-origin & postMessage volume dispatcher (supports VDO.Ninja, IFRAME API, and OBS Ninja)
+  const sendIframeVolume = (vol: number, muted: boolean) => {
+    const iframe = iframeRef.current;
+    if (!iframe || !iframe.contentWindow) return;
+    const targetVol = muted ? 0 : Math.max(0, Math.min(100, vol));
+    try {
+      // VDO.Ninja IFRAME & postMessage API support:
+      // 1. { action: "volume", value: 0-100 }
+      iframe.contentWindow.postMessage({ action: 'volume', value: targetVol }, '*');
+      // 2. { volume: 0.0-1.0 }
+      iframe.contentWindow.postMessage({ volume: targetVol / 100 }, '*');
+      // 3. { volume: 0-100 }
+      iframe.contentWindow.postMessage({ volume: targetVol }, '*');
+      // 4. Mute / Unmute
+      iframe.contentWindow.postMessage({ action: muted ? 'mute' : 'unmute', value: muted }, '*');
+      iframe.contentWindow.postMessage({ mute: muted }, '*');
+    } catch {
+      // Ignore cross-origin frame postMessage sandbox blocks
+    }
+  };
+
+  const handleVolumeChange = (newVol: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(newVol)));
+    setVolume(clamped);
+    if (isMuted && clamped > 0) {
+      setIsMuted(false);
+      try {
+        localStorage.setItem('mh_theater_muted', 'false');
+      } catch {}
+    }
+    try {
+      localStorage.setItem('mh_theater_volume', String(clamped));
+    } catch {}
+
+    if (videoRef.current) {
+      videoRef.current.volume = (isMuted && clamped === 0 ? 0 : clamped) / 100;
+      if (clamped > 0 && isMuted) {
+        videoRef.current.muted = false;
+      }
+    }
+    sendIframeVolume(clamped, isMuted && clamped === 0);
+  };
+
+  const handleToggleMute = () => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('mh_theater_muted', String(next));
+      } catch {}
+      let effectiveVolume = volume;
+      if (!next && volume === 0) {
+        effectiveVolume = 80;
+        setVolume(80);
+        try {
+          localStorage.setItem('mh_theater_volume', '80');
+        } catch {}
+      }
+      if (videoRef.current) {
+        videoRef.current.muted = next;
+        videoRef.current.volume = next ? 0 : effectiveVolume / 100;
+      }
+      sendIframeVolume(effectiveVolume, next);
+      return next;
+    });
+  };
+
+  const getVolumeIcon = (vol: number, muted: boolean) => {
+    if (muted || vol === 0) return '🔇';
+    if (vol < 34) return '🔈';
+    if (vol < 67) return '🔉';
+    return '🔊';
+  };
+
+  // Synchronize volume to HTML5 video element and VDO.Ninja iframe
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = (isMuted ? 0 : volume) / 100;
+      videoRef.current.muted = isMuted;
+    }
+    sendIframeVolume(volume, isMuted);
+
+    // VDO.Ninja WebRTC streams often attach audio tracks asynchronously after peer connection completes
+    const t1 = window.setTimeout(() => sendIframeVolume(volume, isMuted), 400);
+    const t2 = window.setTimeout(() => sendIframeVolume(volume, isMuted), 1200);
+    const t3 = window.setTimeout(() => sendIframeVolume(volume, isMuted), 2500);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
+  }, [volume, isMuted, reloadKey, activeStream?.id]);
 
   const handleToggleCurtainsEnabled = () => {
     setCurtainsEnabled((prev) => {
@@ -1148,6 +1265,44 @@ const isKickStream =
             {projectorFit === 'contain' ? '🎞️ 35mm Fit' : '🎞️ 35mm Fill'}
           </button>
 
+          {/* Cinema Volume Control Slider & Quick Mute */}
+          <div className="theater-volume-control" role="group" aria-label="Screening volume control">
+            <button
+              type="button"
+              className={`theater-btn theater-volume-btn ${isMuted ? 'volume-muted' : ''}`}
+              onClick={handleToggleMute}
+              title={isMuted ? 'Unmute stream audio' : 'Mute stream audio'}
+              aria-label={isMuted ? 'Unmute stream audio' : 'Mute stream audio'}
+              aria-pressed={isMuted}
+            >
+              <span className="volume-icon" aria-hidden="true">
+                {getVolumeIcon(volume, isMuted)}
+              </span>
+              <span className="theater-volume-text">{isMuted ? 'Muted' : `${volume}%`}</span>
+            </button>
+            <div className="theater-volume-slider-wrap">
+              <label htmlFor="theater-volume-slider" className="sr-only">
+                Screening Volume
+              </label>
+              <input
+                id="theater-volume-slider"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                className="theater-volume-slider"
+                title={`Screening Volume: ${isMuted ? 'Muted' : `${volume}%`}`}
+                aria-label="Screening Volume"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={isMuted ? 0 : volume}
+                aria-valuetext={isMuted ? 'Muted' : `${volume} percent`}
+              />
+            </div>
+          </div>
+
           <button
             type="button"
             className={`theater-btn theater-btn-sound ${soundEnabled ? 'sound-on' : 'sound-off'}`}
@@ -1269,6 +1424,7 @@ const isKickStream =
                 />
               ) : (
                 <iframe
+                  ref={iframeRef}
                   key={`${activeStream.id}-${reloadKey}`}
                   src={embedUrl ?? ''}
                   title={`Live stream from ${activeStream.name} on ${activeStream.platform}`}
@@ -1278,7 +1434,11 @@ const isKickStream =
                   allowFullScreen
                   referrerPolicy="strict-origin-when-cross-origin"
                   loading="eager"
-                  onLoad={() => setStreamLoaded(true)}
+                  onLoad={() => {
+                    setStreamLoaded(true);
+                    sendIframeVolume(volume, isMuted);
+                    window.setTimeout(() => sendIframeVolume(volume, isMuted), 600);
+                  }}
                 />
               )}
 
@@ -1838,6 +1998,42 @@ const isKickStream =
                   </button>
                 </>
               )}
+
+              {/* Fullscreen Volume Slider & Quick Mute */}
+              <div className="hud-volume-control" role="group" aria-label="Fullscreen volume control">
+                <button
+                  type="button"
+                  className={`hud-btn hud-volume-btn ${isMuted ? 'volume-muted' : ''}`}
+                  onClick={handleToggleMute}
+                  title={isMuted ? 'Unmute stream audio' : 'Mute stream audio'}
+                  aria-label={isMuted ? 'Unmute stream audio' : 'Mute stream audio'}
+                  aria-pressed={isMuted}
+                >
+                  <span aria-hidden="true">{getVolumeIcon(volume, isMuted)}</span>
+                  <span className="hud-volume-text">{isMuted ? 'Muted' : `${volume}%`}</span>
+                </button>
+                <div className="hud-volume-slider-wrap">
+                  <label htmlFor="hud-volume-slider" className="sr-only">
+                    Fullscreen Volume
+                  </label>
+                  <input
+                    id="hud-volume-slider"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                    className="hud-volume-slider"
+                    title={`Fullscreen Volume: ${isMuted ? 'Muted' : `${volume}%`}`}
+                    aria-label="Fullscreen Volume"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={isMuted ? 0 : volume}
+                    aria-valuetext={isMuted ? 'Muted' : `${volume} percent`}
+                  />
+                </div>
+              </div>
 
               {/* Sound toggle */}
               <button
