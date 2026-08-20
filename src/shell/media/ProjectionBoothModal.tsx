@@ -83,7 +83,6 @@ export function ProjectionBoothModal({
     room: streamToken,
     autoplay: true,
     cleanOutput: true,
-    transparent: true,
   });
 
   // 2. MediaMTX URLs
@@ -94,7 +93,7 @@ export function ProjectionBoothModal({
   
   // MediaMTX WebRTC URL (via direct HTTP or VDO.Ninja HTTPS relay to avoid browser Mixed Content blocks)
   const mtxDirectUrl = `http://${cleanMtxHost}:${mtxWebRtcPort}/${cleanMtxPath}`;
-  const mtxNinjaRelayUrl = `https://vdo.ninja/?view=${encodeURIComponent(cleanMtxPath)}&mediamtx=${encodeURIComponent(cleanMtxHost)}:${encodeURIComponent(mtxWebRtcPort)}&cleanoutput=1&autoplay=1&transparent=1&autostart=1&nocontrols=1&nodirectorvideo=1`;
+  const mtxNinjaRelayUrl = `https://vdo.ninja/?view=${encodeURIComponent(cleanMtxPath)}&mediamtx=${encodeURIComponent(cleanMtxHost)}:${encodeURIComponent(mtxWebRtcPort)}&cleanoutput=1&autoplay=1&darkmode=1&dark=1&chroma=000000&autostart=1&nocontrols=1&nodirectorvideo=1`;
 
   // 3. Cloudflare Stream URLs
   const cfRtmpsServer = 'rtmps://live.cloudflare.com:443/live/';

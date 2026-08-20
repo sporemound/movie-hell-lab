@@ -1828,7 +1828,18 @@ export default function App() {
       return;
     }
     event.preventDefault();
-    const target = nextPage === 'faq' ? '/faq' : nextPage === 'admin' ? '/admin' : nextPage === 'mod' ? '/mod' : '/';
+    // Preserve active room and stream query params across page navigation
+    const params = new URLSearchParams(window.location.search);
+    if (selectedRoomId && !params.has('room')) {
+      params.set('room', selectedRoomId);
+    }
+    if (activeStream && !params.has('stream')) {
+      params.set('stream', activeStream.id);
+    }
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const path = nextPage === 'faq' ? '/faq' : nextPage === 'admin' ? '/admin' : nextPage === 'mod' ? '/mod' : '/';
+    const target = `${path}${query}`;
+
     if (window.location.pathname + window.location.search + window.location.hash !== target) {
       window.history.pushState({}, '', target);
     }

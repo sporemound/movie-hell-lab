@@ -2287,20 +2287,11 @@ h2 {
 }
 
 .stage-projector-beam {
-  position: absolute;
-  top: 0;
-  left: 10%;
-  right: 10%;
-  height: 60%;
-  pointer-events: none;
-  z-index: 10;
-  opacity: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255, 235, 175, 0.16) 0%, rgba(255, 215, 120, 0.04) 45%, transparent 75%);
-  transition: opacity 1.5s ease;
+  display: none !important;
 }
 
 .stage-projector-beam.beam-active {
-  opacity: 1;
+  display: none !important;
 }
 
 /* Grand Velvet Valance (Top Pelmet) */

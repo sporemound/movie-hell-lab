@@ -190,7 +190,10 @@ export function streamEmbedUrl(stream: StreamListing): string {
         if (!parsed.searchParams.has('autostart')) parsed.searchParams.set('autostart', '1');
         if (!parsed.searchParams.has('autoplay')) parsed.searchParams.set('autoplay', '1');
         if (!parsed.searchParams.has('cleanoutput')) parsed.searchParams.set('cleanoutput', '1');
-        if (!parsed.searchParams.has('transparent')) parsed.searchParams.set('transparent', '1');
+        parsed.searchParams.delete('transparent');
+        if (!parsed.searchParams.has('darkmode')) parsed.searchParams.set('darkmode', '1');
+        if (!parsed.searchParams.has('dark')) parsed.searchParams.set('dark', '1');
+        if (!parsed.searchParams.has('chroma')) parsed.searchParams.set('chroma', '000000');
         if (!parsed.searchParams.has('nocontrols')) parsed.searchParams.set('nocontrols', '1');
         if (!parsed.searchParams.has('hideheader')) parsed.searchParams.set('hideheader', '1');
         if (!parsed.searchParams.has('nodirectorvideo')) parsed.searchParams.set('nodirectorvideo', '1');
@@ -203,7 +206,7 @@ export function streamEmbedUrl(stream: StreamListing): string {
       }
     }
     const token = (stream.channel || stream.id || 'moviehell_test').replace(/^vdo-ninja:room-|^vdo-ninja:whip-|^vdo-ninja:/, '');
-    return `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&cleanoutput=1&transparent=1&autostart=1&nocontrols=1&hideheader=1&nodirectorvideo=1`;
+    return `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&cleanoutput=1&darkmode=1&dark=1&chroma=000000&autostart=1&nocontrols=1&hideheader=1&nodirectorvideo=1`;
   }
 
   if (stream.platform === 'mock') {
