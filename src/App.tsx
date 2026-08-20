@@ -1105,7 +1105,7 @@ export default function App() {
       } finally {
         if (active) setGifsLoading(false);
       }
-    }, gifSearchQuery ? 300 : 0);
+    }, gifSearchQuery ? 150 : 0);
 
     return () => {
       active = false;
@@ -2300,6 +2300,19 @@ export default function App() {
                         onChange={(event) => setGifSearchQuery(event.target.value)}
                         autoFocus
                       />
+                      {gifSearchQuery && (
+                        <button
+                          type="button"
+                          className="gif-search-clear"
+                          aria-label="Clear search"
+                          onClick={() => {
+                            setGifSearchQuery('');
+                            gifSearchInputRef.current?.focus();
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
 
                     <div className="gif-tag-chips" role="group" aria-label="Suggested GIF search tags">

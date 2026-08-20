@@ -2039,25 +2039,31 @@ type GiphyGifItem = {
   mp4Url?: string;
   width: number;
   height: number;
+  tags?: string[];
 };
 
 const CURATED_CINEMA_GIFS: GiphyGifItem[] = [
-  { id: "3o7aCSPqXE5C6T8tBC", title: "Cinema Popcorn Munch", previewUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/giphy.gif", width: 480, height: 270 },
-  { id: "l0MYRzcWP7cONUT72", title: "Midnight Horror Screaming", previewUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/200w.gif", mediaUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/giphy.gif", width: 480, height: 270 },
-  { id: "l2Je2M4Nfrit0L7sQ", title: "Cult Classic Shock", previewUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/200w.gif", mediaUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/giphy.gif", width: 480, height: 270 },
-  { id: "xT9IgzoKnwFNmISR8I", title: "Standing Ovation Applause", previewUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/200w.gif", mediaUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif", width: 480, height: 270 },
-  { id: "3o7TKRBB3E7OI1WKYo", title: "Film Noir Stare", previewUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/giphy.gif", width: 480, height: 270 },
-  { id: "26ufdipQqU2lhNA4g", title: "Mind Blown Cinema", previewUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/200w.gif", mediaUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif", width: 480, height: 270 },
-  { id: "3o85xGocUH8RY0Fbhm", title: "Cinema Gasps in Fear", previewUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/200w.gif", mediaUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/giphy.gif", width: 480, height: 270 },
-  { id: "l0HlvtIPzPdt2usKs", title: "Classic Action Jump", previewUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif", width: 480, height: 270 },
-  { id: "d31w24psGYeekC6o", title: "Auteur Director Cut", previewUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/200w.gif", mediaUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/giphy.gif", width: 480, height: 270 },
-  { id: "l0HlPtb345MCH2lbW", title: "Giallo Murder Mystery", previewUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/giphy.gif", width: 480, height: 270 },
-  { id: "3o6Zt481isNVuQI1l6", title: "Wild Screaming Chaos", previewUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/200w.gif", mediaUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif", width: 480, height: 270 },
-  { id: "26xBwdIuRJiAIprV6", title: "Cult B-Movie Laser", previewUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/200w.gif", mediaUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/giphy.gif", width: 480, height: 270 },
-  { id: "3o7qDQ4kcSD1PLM3VS", title: "Theater Lights Out", previewUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/giphy.gif", width: 480, height: 270 },
-  { id: "3o7TKSjRrfIPjeiVyM", title: "Velvet Curtain Closes", previewUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif", width: 480, height: 270 },
-  { id: "3o7TKMEJJKqJuENNT2", title: "Intense Film Reel Smoke", previewUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/giphy.gif", width: 480, height: 270 },
-  { id: "l0HlQXkhxUp516VWU", title: "Midnight Creature Roar", previewUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/giphy.gif", width: 480, height: 270 },
+  { id: "3o7aCSPqXE5C6T8tBC", title: "Cinema Popcorn Munch", previewUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7aCSPqXE5C6T8tBC/giphy.gif", width: 480, height: 270, tags: ["popcorn", "movie", "eating", "snack", "theater", "watching", "film", "cinema", "nom"] },
+  { id: "l0MYRzcWP7cONUT72", title: "Midnight Horror Screaming", previewUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/200w.gif", mediaUrl: "https://media.giphy.com/media/l0MYRzcWP7cONUT72/giphy.gif", width: 480, height: 270, tags: ["horror", "scream", "screaming", "scared", "fear", "panic", "creepy", "ghost", "monster"] },
+  { id: "l2Je2M4Nfrit0L7sQ", title: "Cult Classic Shock", previewUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/200w.gif", mediaUrl: "https://media.giphy.com/media/l2Je2M4Nfrit0L7sQ/giphy.gif", width: 480, height: 270, tags: ["cult", "shock", "shocked", "omg", "wtf", "retro", "classic", "eyes", "wild"] },
+  { id: "xT9IgzoKnwFNmISR8I", title: "Standing Ovation Applause", previewUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/200w.gif", mediaUrl: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif", width: 480, height: 270, tags: ["applause", "clapping", "clap", "cheer", "cheering", "bravo", "ovation", "award", "win", "good"] },
+  { id: "3o7TKRBB3E7OI1WKYo", title: "Film Noir Stare", previewUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKRBB3E7OI1WKYo/giphy.gif", width: 480, height: 270, tags: ["noir", "stare", "detective", "shadow", "dark", "crime", "mystery", "smoke", "serious"] },
+  { id: "26ufdipQqU2lhNA4g", title: "Mind Blown Cinema", previewUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/200w.gif", mediaUrl: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif", width: 480, height: 270, tags: ["mindblown", "mind", "blown", "explosion", "head", "crazy", "plot", "twist", "whoa", "wow"] },
+  { id: "3o85xGocUH8RY0Fbhm", title: "Cinema Gasps in Fear", previewUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/200w.gif", mediaUrl: "https://media.giphy.com/media/3o85xGocUH8RY0Fbhm/giphy.gif", width: 480, height: 270, tags: ["gasp", "fear", "hands", "face", "horror", "shock", "scared", "afraid"] },
+  { id: "l0HlvtIPzPdt2usKs", title: "Classic Action Jump", previewUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif", width: 480, height: 270, tags: ["action", "jump", "stunt", "hero", "fight", "fighting", "epic", "speed", "run"] },
+  { id: "d31w24psGYeekC6o", title: "Auteur Director Cut", previewUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/200w.gif", mediaUrl: "https://media.giphy.com/media/d31w24psGYeekC6o/giphy.gif", width: 480, height: 270, tags: ["director", "cut", "camera", "action", "film", "hollywood", "cinema", "slate", "clapper"] },
+  { id: "l0HlPtb345MCH2lbW", title: "Giallo Murder Mystery", previewUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlPtb345MCH2lbW/giphy.gif", width: 480, height: 270, tags: ["giallo", "blood", "red", "murder", "mystery", "killer", "gloves", "italy", "vintage"] },
+  { id: "3o6Zt481isNVuQI1l6", title: "Wild Screaming Chaos", previewUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/200w.gif", mediaUrl: "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif", width: 480, height: 270, tags: ["chaos", "wild", "screaming", "rage", "mad", "angry", "yell", "shout", "crazy"] },
+  { id: "26xBwdIuRJiAIprV6", title: "Cult B-Movie Laser", previewUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/200w.gif", mediaUrl: "https://media.giphy.com/media/26xBwdIuRJiAIprV6/giphy.gif", width: 480, height: 270, tags: ["laser", "scifi", "alien", "space", "bmovie", "cult", "retro", "pew", "beam", "future"] },
+  { id: "3o7qDQ4kcSD1PLM3VS", title: "Theater Lights Out", previewUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7qDQ4kcSD1PLM3VS/giphy.gif", width: 480, height: 270, tags: ["theater", "lights", "dark", "cinema", "curtain", "start", "show", "auditorium"] },
+  { id: "3o7TKSjRrfIPjeiVyM", title: "Velvet Curtain Closes", previewUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif", width: 480, height: 270, tags: ["curtain", "velvet", "close", "theend", "end", "done", "finale", "outro", "bye"] },
+  { id: "3o7TKMEJJKqJuENNT2", title: "Intense Film Reel Smoke", previewUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKMEJJKqJuENNT2/giphy.gif", width: 480, height: 270, tags: ["smoke", "reel", "projector", "fire", "burn", "vintage", "grain", "light"] },
+  { id: "l0HlQXkhxUp516VWU", title: "Midnight Creature Roar", previewUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlQXkhxUp516VWU/giphy.gif", width: 480, height: 270, tags: ["creature", "monster", "vampire", "werewolf", "teeth", "roar", "spooky", "beast"] },
+  { id: "3o7TKxZzyBk4IlS7Is", title: "Hysterical Laughing", previewUrl: "https://media.giphy.com/media/3o7TKxZzyBk4IlS7Is/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKxZzyBk4IlS7Is/giphy.gif", width: 480, height: 270, tags: ["laugh", "laughing", "lol", "lmao", "haha", "funny", "comedy", "joke", "giggle"] },
+  { id: "3o6Mb43TDU450u961y", title: "Third Act Dramatic Crying", previewUrl: "https://media.giphy.com/media/3o6Mb43TDU450u961y/200w.gif", mediaUrl: "https://media.giphy.com/media/3o6Mb43TDU450u961y/giphy.gif", width: 480, height: 270, tags: ["cry", "crying", "tears", "sad", "drama", "sob", "heartbreak", "emotional"] },
+  { id: "l0HlCqV35Dmhf6Vlm", title: "Cinema Rage Smash", previewUrl: "https://media.giphy.com/media/l0HlCqV35Dmhf6Vlm/200w.gif", mediaUrl: "https://media.giphy.com/media/l0HlCqV35Dmhf6Vlm/giphy.gif", width: 480, height: 270, tags: ["rage", "angry", "mad", "smash", "break", "punch", "fight", "furious"] },
+  { id: "3o7TKD56vhyOydJaE0", title: "Midnight Toast Drink", previewUrl: "https://media.giphy.com/media/3o7TKD56vhyOydJaE0/200w.gif", mediaUrl: "https://media.giphy.com/media/3o7TKD56vhyOydJaE0/giphy.gif", width: 480, height: 270, tags: ["drink", "drinking", "cheers", "beer", "wine", "cocktail", "toast", "alcohol", "party"] },
+  { id: "l2Jeczy9BIKmNuhPO", title: "Cinema Cool Cat", previewUrl: "https://media.giphy.com/media/l2Jeczy9BIKmNuhPO/200w.gif", mediaUrl: "https://media.giphy.com/media/l2Jeczy9BIKmNuhPO/giphy.gif", width: 480, height: 270, tags: ["cat", "kitty", "feline", "animal", "pet", "cool", "sunglasses", "vibes"] },
 ];
 
 async function fetchGiphy(
@@ -2123,11 +2129,16 @@ async function fetchGiphy(
   }
 
   // Graceful curated fallback catalog
-  const filtered = query
-    ? CURATED_CINEMA_GIFS.filter((g) => g.title.toLowerCase().includes(query) || query.split(/\s+/).some((w) => g.title.toLowerCase().includes(w)))
+  const qTerms = query.split(/\s+/).filter(Boolean);
+  const filtered = qTerms.length > 0
+    ? CURATED_CINEMA_GIFS.filter((g) => {
+        const titleMatch = g.title.toLowerCase();
+        const tagMatch = (g.tags || []).join(" ").toLowerCase();
+        return qTerms.every((term) => titleMatch.includes(term) || tagMatch.includes(term));
+      })
     : CURATED_CINEMA_GIFS;
 
-  const gifs = filtered.length > 0 ? filtered : CURATED_CINEMA_GIFS;
+  const gifs = query ? filtered : CURATED_CINEMA_GIFS;
   const response = json({ ok: true, gifs, fallback: true });
   response.headers.set("Cache-Control", "public, max-age=60, s-maxage=60");
   return response;

@@ -1113,12 +1113,15 @@ h2 {
 }
 
 .gif-search-container {
+  position: relative;
   margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
 }
 
 .gif-search-input {
   width: 100%;
-  padding: 0.45rem 0.65rem;
+  padding: 0.45rem 2rem 0.45rem 0.65rem;
   background: rgba(12, 3, 6, 0.85);
   border: 1px solid rgba(216, 182, 107, 0.4);
   border-radius: 0.25rem;
@@ -1126,6 +1129,24 @@ h2 {
   font-size: 0.82rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.gif-search-clear {
+  position: absolute;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  min-height: unset;
+  box-shadow: none;
+  line-height: 1;
+}
+
+.gif-search-clear:hover {
+  color: var(--gold-bright);
 }
 
 .gif-search-input:focus {
