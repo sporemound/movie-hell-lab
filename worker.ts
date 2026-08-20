@@ -3772,10 +3772,13 @@ export class ChatRoom extends DurableObject<Env> {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) {
-      return route(request, env);
+    try {
+      return await route(request, env);
+    } catch (error) {
+      if (error instanceof HttpError) {
+        return json({ ok: false, error: error.message }, error.status);
+      }
+      return json({ ok: false, error: "Internal server error." }, 500);
     }
-    return staticAsset(request, env);
   },
 } satisfies ExportedHandler<Env>;
