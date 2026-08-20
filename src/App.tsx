@@ -769,7 +769,7 @@ export default function App() {
   const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      return params.get('roomId') || '';
+      return params.get('roomId') || params.get('room') || '';
     }
     return '';
   });
@@ -859,7 +859,7 @@ export default function App() {
       } else if (streamParam.startsWith('mediamtx:')) {
         const path = streamParam.replace(/^mediamtx:/, '');
         const host = 'localhost';
-        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(path)}&mediamtx=${encodeURIComponent(host)}:8889&cleanoutput=1&autoplay=1&transparent=1&autostart=1&nocontrols=1&nodirectorvideo=1`;
+        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(path)}&mediamtx=${encodeURIComponent(host)}:8889&cleanoutput=1&autoplay=1&autostart=1&nocontrols=1`;
         setActiveStream({
           id: streamParam,
           platform: 'mediamtx',
@@ -875,7 +875,7 @@ export default function App() {
         });
       } else if (streamParam.startsWith('vdo-ninja:')) {
         const token = streamParam.replace(/^vdo-ninja:room-|^vdo-ninja:whip-|^vdo-ninja:/, '');
-        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&autostart=1&cleanoutput=1&transparent=0&nocontrols=1`;
+        const targetUrl = `https://vdo.ninja/?view=${encodeURIComponent(token)}&autoplay=1&autostart=1&cleanoutput=1&nocontrols=1`;
         setActiveStream({
           id: streamParam,
           platform: 'vdo-ninja',
