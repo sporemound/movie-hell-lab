@@ -3733,43 +3733,11 @@ export class ChatRoom extends DurableObject<Env> {
 
   private async broadcast(payload: string): Promise<void> {
     const sockets = this.ctx.getWebSockets();
-    if (sockets.length === 0) return;
-    const attachments = sockets.map((socket) => socket.deserializeAttachment() as SocketAttachment | null);
-    const roomIds = new Set(attachments
-      .map((attachment) => attachment?.roomId)
-      .filter((roomId): roomId is string => Boolean(roomId && ROOM_ID.test(roomId))));
-    if (roomIds.size !== 1) {
-      for (const socket of sockets) socket.close(1008, "Invalid room state");
-      return;
-    }
-    const [roomId] = roomIds;
-    const sessionIds = [...new Set(attachments
-      .map((attachment) => attachment?.sessionId)
-      .filter((sessionId): sessionId is string => Boolean(sessionId && SESSION_ID.test(sessionId))))];
-    const activeSessionUsers = new Set<string>();
-    if (sessionIds.length > 0) {
-      const placeholders = sessionIds.map(() => "?").join(", ");
-      const active = await this.env.DB.prepare(`
-        SELECT id, user_id AS userId FROM sessions
-        WHERE id IN (${placeholders}) AND revoked_at IS NULL AND access_expires_at > ?
-          AND NOT EXISTS (
-            SELECT 1 FROM room_bans
-            WHERE room_id = ? AND user_id = sessions.user_id
-          )
-      `).bind(...sessionIds, Date.now(), roomId).all<{ id: string; userId: number }>();
-      for (const row of active.results) activeSessionUsers.add(`${row.id}:${row.userId}`);
-    }
-    for (let index = 0; index < sockets.length; index += 1) {
-      const socket = sockets[index];
-      const attachment = attachments[index];
-      if (!attachment || attachment.roomId !== roomId || !activeSessionUsers.has(`${attachment.sessionId}:${attachment.userId}`)) {
-        socket.close(1008, "Session expired or room access revoked");
-        continue;
-      }
+    for (const socket of sockets) {
       try {
         socket.send(payload);
       } catch {
-        socket.close(1011, "Delivery failed");
+        // Socket disconnected or failing
       }
     }
   }
