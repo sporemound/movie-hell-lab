@@ -2266,37 +2266,61 @@ function validWebSocketOrigin(request: Request): boolean {
 }
 
 async function connectWebSocket(request: Request, env: Env, url: URL): Promise<Response> {
-  if (request.headers.get("upgrade")?.toLowerCase() !== "websocket") fail(426, "WebSocket upgrade required.");
-  if (!validWebSocketOrigin(request)) fail(403, "Invalid WebSocket origin.");
-  const roomId = canonicalRoomId(url.searchParams.get("roomId"));
-  const ticket = url.searchParams.get("ticket") ?? "";
-  if (!/^[a-f0-9]{64}$/.test(ticket)) fail(401, "Invalid WebSocket ticket.");
-  const now = Date.now();
-  const ticketRow = await env.DB.prepare(`
-    UPDATE websocket_tickets SET consumed_at = ?
-    WHERE ticket_hash = ? AND room_id = ? AND consumed_at IS NULL AND expires_at > ?
-      AND EXISTS (
-        SELECT 1 FROM sessions
-        WHERE sessions.id = websocket_tickets.session_id
-          AND sessions.user_id = websocket_tickets.user_id
-          AND sessions.revoked_at IS NULL
-          AND sessions.access_expires_at > ?
-      )
-    RETURNING user_id AS userId, session_id AS sessionId
-  `).bind(now, await sha256(ticket), roomId, now, now).first<{ userId: number; sessionId: string }>();
-  if (!ticketRow) fail(401, "Invalid, expired, or used WebSocket ticket.");
-  await assertRoomAccess(env, ticketRow.userId, roomId);
-  const user = await env.DB.prepare("SELECT nickname FROM users WHERE id = ?")
-    .bind(ticketRow.userId).first<{ nickname: string }>();
-  if (!user) fail(401, "Account not found.");
-  const stub = await roomStub(env, roomId);
-  const req = new Request("https://internal/connect", request);
-  req.headers.set("x-user-id", String(ticketRow.userId));
-  req.headers.set("x-session-id", ticketRow.sessionId);
-  req.headers.set("x-nickname", encodeURIComponent(user.nickname));
-  req.headers.set("x-room-id", roomId);
+  try {
+    if (request.headers.get("upgrade")?.toLowerCase() !== "websocket") {
+      console.error("[WS ERROR] Missing upgrade header:", request.headers.get("upgrade"));
+      fail(426, "WebSocket upgrade required.");
+    }
+    if (!validWebSocketOrigin(request)) {
+      console.error("[WS ERROR] Invalid origin:", request.headers.get("origin"));
+      fail(403, "Invalid WebSocket origin.");
+    }
+    const roomId = canonicalRoomId(url.searchParams.get("roomId"));
+    const ticket = url.searchParams.get("ticket") ?? "";
+    if (!/^[a-f0-9]{64}$/.test(ticket)) {
+      console.error("[WS ERROR] Invalid ticket format:", ticket);
+      fail(401, "Invalid WebSocket ticket.");
+    }
+    const now = Date.now();
+    const ticketHash = await sha256(ticket);
+    const ticketRow = await env.DB.prepare(`
+      UPDATE websocket_tickets SET consumed_at = ?
+      WHERE ticket_hash = ? AND room_id = ? AND consumed_at IS NULL AND expires_at > ?
+        AND EXISTS (
+          SELECT 1 FROM sessions
+          WHERE sessions.id = websocket_tickets.session_id
+            AND sessions.user_id = websocket_tickets.user_id
+            AND sessions.revoked_at IS NULL
+            AND sessions.access_expires_at > ?
+        )
+      RETURNING user_id AS userId, session_id AS sessionId
+    `).bind(now, ticketHash, roomId, now, now).first<{ userId: number; sessionId: string }>();
+    if (!ticketRow) {
+      console.error("[WS ERROR] Ticket not found, expired, or already consumed in DB. Ticket:", ticket);
+      fail(401, "Invalid, expired, or used WebSocket ticket.");
+    }
+    await assertRoomAccess(env, ticketRow.userId, roomId);
+    const user = await env.DB.prepare("SELECT nickname FROM users WHERE id = ?")
+      .bind(ticketRow.userId).first<{ nickname: string }>();
+    if (!user) {
+      console.error("[WS ERROR] User record missing:", ticketRow.userId);
+      fail(401, "Account not found.");
+    }
+    const stub = await roomStub(env, roomId);
+    const req = new Request("https://internal/connect", request);
+    req.headers.set("x-user-id", String(ticketRow.userId));
+    req.headers.set("x-session-id", ticketRow.sessionId);
+    req.headers.set("x-nickname", encodeURIComponent(user.nickname));
+    req.headers.set("x-room-id", roomId);
+    req.headers.set("upgrade", "websocket");
 
-  return stub.fetch(req);
+    const res = await stub.fetch(req);
+    console.log("[WS DEBUG] ChatRoom DO returned status:", res.status);
+    return res;
+  } catch (err) {
+    console.error("[WS ERROR] Exception in connectWebSocket:", err);
+    throw err;
+  }
 }
 
 async function staticAsset(request: Request, env: Env): Promise<Response> {
