@@ -2307,12 +2307,17 @@ async function connectWebSocket(request: Request, env: Env, url: URL): Promise<R
       fail(401, "Account not found.");
     }
     const stub = await roomStub(env, roomId);
-    const req = new Request("https://internal/connect", request);
-    req.headers.set("x-user-id", String(ticketRow.userId));
-    req.headers.set("x-session-id", ticketRow.sessionId);
-    req.headers.set("x-nickname", encodeURIComponent(user.nickname));
-    req.headers.set("x-room-id", roomId);
-    req.headers.set("upgrade", "websocket");
+    const headers = new Headers(request.headers);
+    headers.set("x-user-id", String(ticketRow.userId));
+    headers.set("x-session-id", ticketRow.sessionId);
+    headers.set("x-nickname", encodeURIComponent(user.nickname));
+    headers.set("x-room-id", roomId);
+    headers.set("upgrade", "websocket");
+
+    const req = new Request("https://internal/connect", {
+      method: "GET",
+      headers,
+    });
 
     const res = await stub.fetch(req);
     console.log("[WS DEBUG] ChatRoom DO returned status:", res.status);
