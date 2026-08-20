@@ -51,13 +51,8 @@ export function getVdoNinjaViewerUrl(options: VdoNinjaViewerOptions): string {
     autostart: '1',
     autoplay: options.autoplay !== false ? '1' : '0',
     cleanoutput: options.cleanOutput !== false ? '1' : '0',
-    darkmode: '1',
-    dark: '1',
-    chroma: '000000',
+    transparent: '1',
     nocontrols: '1',
-    hideheader: '1',
-    nodirectorvideo: '1',
-    fadein: '300',
   });
 
   if (options.password) params.set('password', options.password);
