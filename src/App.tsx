@@ -54,6 +54,16 @@ type ConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected';
 type RoomView = 'chat' | 'canvas' | 'shrine' | 'gallery' | 'chatters';
 type SitePage = 'home' | 'faq' | 'popout-chat' | 'popout-stage' | 'popout-canvas' | 'admin' | 'mod';
 
+type GiphyGif = {
+  id: string;
+  title: string;
+  previewUrl: string;
+  mediaUrl: string;
+  mp4Url?: string;
+  width: number;
+  height: number;
+};
+
 const retryDelays = [1_000, 2_000, 4_000, 8_000, 10_000];
 const appName = 'Movie Hell';
 const SAFETY_LOCKDOWN: boolean = false;
@@ -573,7 +583,7 @@ function MessageText({
 }) {
   const parts: ReactNode[] = [];
   const tokenMatcher =
-    /\[\[mh-emoji:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]\]|:([a-z0-9][a-z0-9_-]{1,31}):/gi;
+    /\[\[mh-emoji:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]\]|\[\[giphy:([a-zA-Z0-9_-]+)(?::([^\]]*))?\]\]|:([a-z0-9][a-z0-9_-]{1,31}):/gi;
   let cursor = 0;
   let match: RegExpExecArray | null;
 
@@ -583,7 +593,9 @@ function MessageText({
     }
 
     const emojiId = match[1]?.toLowerCase();
-    const shortcode = match[2]?.toLowerCase();
+    const giphyId = match[2];
+    const giphyTitle = match[3];
+    const shortcode = match[4]?.toLowerCase();
 
     if (emojiId) {
       const emoji = emojisById?.get(emojiId);
@@ -598,6 +610,19 @@ function MessageText({
           loading="lazy"
           decoding="async"
         />,
+      );
+    } else if (giphyId) {
+      parts.push(
+        <figure key={`giphy-${match.index}-${giphyId}`} className="chat-gif-card">
+          <img
+            className="chat-gif-media"
+            src={`https://media.giphy.com/media/${giphyId}/giphy.gif`}
+            alt={giphyTitle || 'Cinema GIF'}
+            loading="lazy"
+            decoding="async"
+          />
+          <span className="chat-gif-badge">GIPHY</span>
+        </figure>,
       );
     } else if (shortcode) {
       const emoji = emojisByShortcode?.get(shortcode);
@@ -966,6 +991,11 @@ export default function App() {
   const [roomChatters, setRoomChatters] = useState<Chatter[]>([]);
   const [chatterQuery, setChatterQuery] = useState('');
   const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [gifPickerOpen, setGifPickerOpen] = useState(false);
+  const [gifSearchQuery, setGifSearchQuery] = useState('');
+  const [gifs, setGifs] = useState<GiphyGif[]>([]);
+  const [gifsLoading, setGifsLoading] = useState(false);
+  const [gifsError, setGifsError] = useState('');
   const [customEmojis, setCustomEmojis] = useState<CustomEmoji[]>([]);
   const [emojisLoading, setEmojisLoading] = useState(false);
   const [emojiCatalogRefreshKey, setEmojiCatalogRefreshKey] = useState(0);
@@ -1041,9 +1071,47 @@ export default function App() {
   const socketRef = useRef<WebSocket | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const reactionToggleRef = useRef<HTMLButtonElement | null>(null);
+  const gifToggleRef = useRef<HTMLButtonElement | null>(null);
+  const gifSearchInputRef = useRef<HTMLInputElement | null>(null);
   const emojiFileRef = useRef<HTMLInputElement | null>(null);
   const messageListRef = useRef<HTMLOListElement | null>(null);
   const canvasEpochRef = useRef(0);
+
+  useEffect(() => {
+    if (!gifPickerOpen) return;
+    let active = true;
+    const timer = setTimeout(async () => {
+      setGifsLoading(true);
+      setGifsError('');
+      try {
+        const query = gifSearchQuery.trim();
+        const endpoint = query
+          ? `/api/giphy/search?q=${encodeURIComponent(query)}`
+          : '/api/giphy/trending';
+        const res = await api<{ ok: boolean; gifs?: GiphyGif[]; error?: string }>(
+          endpoint,
+          {},
+          accessToken,
+        );
+        if (!active) return;
+        if (res.ok && Array.isArray(res.gifs)) {
+          setGifs(res.gifs);
+        } else {
+          setGifsError(res.error || 'Failed to load cinema GIFs.');
+        }
+      } catch (err) {
+        if (!active) return;
+        setGifsError(errorText(err, 'Could not load cinema GIFs.'));
+      } finally {
+        if (active) setGifsLoading(false);
+      }
+    }, gifSearchQuery ? 300 : 0);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [gifPickerOpen, gifSearchQuery, accessToken]);
 
   useEffect(() => {
     if (roomView === 'chat' && messageListRef.current) {
@@ -1656,13 +1724,11 @@ export default function App() {
     }
   };
 
-  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const text = draft.trim();
+  const sendChatMessage = async (textToSend: string) => {
+    const text = textToSend.trim();
     if (!text || !selectedRoomId || !user) return;
 
     setError('');
-    setDraft('');
     const pending: Message = {
       id: 'pending-' + Date.now(),
       roomId: selectedRoomId,
@@ -1698,8 +1764,22 @@ export default function App() {
         current.filter((message) => String(message.id) !== String(pending.id)),
       );
       setError(errorText(requestError, 'Could not send the message.'));
-      setDraft(text);
     }
+  };
+
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    setDraft('');
+    await sendChatMessage(text);
+  };
+
+  const sendGif = async (gif: GiphyGif) => {
+    const cleanTitle = (gif.title || 'Cinema GIF').replace(/[\[\]:]/g, ' ').slice(0, 40).trim();
+    setGifPickerOpen(false);
+    await sendChatMessage(`[[giphy:${gif.id}:${cleanTitle}]]`);
+    messageInputRef.current?.focus();
   };
 
   const uploadEmoji = async (event: FormEvent<HTMLFormElement>) => {
@@ -2179,6 +2259,90 @@ export default function App() {
                     )}
                   </div>
                 )}
+                {gifPickerOpen && (
+                  <div
+                    id="cinema-gifs"
+                    className="reaction-picker gif-picker"
+                    role="dialog"
+                    aria-label="Cinema GIFs"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        setGifPickerOpen(false);
+                        gifToggleRef.current?.focus();
+                      }
+                    }}
+                  >
+                    <div className="reaction-picker-heading">
+                      <div>
+                        <strong>⚡ R-Rated Cinema GIFs</strong>
+                        <span>Search or pick from trending cuts</span>
+                      </div>
+                      <button
+                        className="reaction-close"
+                        type="button"
+                        aria-label="Close GIF picker"
+                        onClick={() => {
+                          setGifPickerOpen(false);
+                          gifToggleRef.current?.focus();
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <div className="gif-search-container">
+                      <input
+                        ref={gifSearchInputRef}
+                        type="search"
+                        className="gif-search-input"
+                        placeholder="Search R-rated cinema GIFs..."
+                        value={gifSearchQuery}
+                        onChange={(event) => setGifSearchQuery(event.target.value)}
+                        autoFocus
+                      />
+                    </div>
+
+                    <div className="gif-tag-chips" role="group" aria-label="Suggested GIF search tags">
+                      {['cult', 'horror', 'cinema', 'action', 'noir', 'reaction', 'screaming', 'applause'].map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className={`gif-tag-chip ${gifSearchQuery.toLowerCase() === tag ? 'active' : ''}`}
+                          onClick={() => setGifSearchQuery(tag)}
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+
+                    {gifsLoading ? (
+                      <p className="reaction-note" role="status">Rolling the GIF reel…</p>
+                    ) : gifsError ? (
+                      <p className="reaction-error" role="alert">{gifsError}</p>
+                    ) : gifs.length === 0 ? (
+                      <p className="reaction-note">No GIFs found for &ldquo;{gifSearchQuery}&rdquo;.</p>
+                    ) : (
+                      <div className="gif-grid" role="group" aria-label="Available cinema GIFs">
+                        {gifs.map((gif) => (
+                          <button
+                            key={gif.id}
+                            type="button"
+                            className="gif-grid-item"
+                            title={gif.title}
+                            onClick={() => sendGif(gif)}
+                          >
+                            <img
+                              src={gif.previewUrl}
+                              alt={gif.title}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="composer-label">
                   <label htmlFor="message">Your take</label>
                   <span>Keep the aisle clear for good banter.</span>
@@ -2195,11 +2359,32 @@ export default function App() {
                       onClick={() => {
                         const opening = !reactionsOpen;
                         setReactionsOpen(opening);
-                        if (opening) setEmojiCatalogRefreshKey((current) => current + 1);
+                        if (opening) {
+                          setGifPickerOpen(false);
+                          setEmojiCatalogRefreshKey((current) => current + 1);
+                        }
                       }}
                     >
                       <span aria-hidden="true">🎬</span>
                       <span className="reaction-toggle-text">Reactions</span>
+                    </button>
+                    <button
+                      ref={gifToggleRef}
+                      className="reaction-toggle gif-toggle"
+                      type="button"
+                      aria-label="Choose an R-rated GIF"
+                      aria-expanded={gifPickerOpen}
+                      aria-controls="cinema-gifs"
+                      onClick={() => {
+                        const opening = !gifPickerOpen;
+                        setGifPickerOpen(opening);
+                        if (opening) {
+                          setReactionsOpen(false);
+                        }
+                      }}
+                    >
+                      <span aria-hidden="true">⚡</span>
+                      <span className="reaction-toggle-text">GIF</span>
                     </button>
                   </div>
                   <form className="message-form" onSubmit={sendMessage}>

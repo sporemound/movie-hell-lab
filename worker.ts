@@ -2031,6 +2031,93 @@ async function serveEmoji(request: Request, env: Env, id: string): Promise<Respo
   return new Response(imageBytes, { status: 200, headers: responseHeaders });
 }
 
+type GiphyGifItem = {
+  id: string;
+  title: string;
+  previewUrl: string;
+  mediaUrl: string;
+  mp4Url?: string;
+  width: number;
+  height: number;
+};
+
+async function fetchGiphy(
+  env: Env,
+  endpoint: "search" | "trending",
+  params: Record<string, string>,
+): Promise<Response> {
+  const apiKey = (env as any).GIPHY_API_KEY || "dc6zaTOxFJmzC";
+  const searchParams = new URLSearchParams({
+    api_key: apiKey,
+    rating: "r",
+    limit: "24",
+    lang: "en",
+    ...params,
+  });
+
+  const url = `https://api.giphy.com/v1/gifs/${endpoint}?${searchParams.toString()}`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Accept": "application/json",
+        "User-Agent": "MovieHell/2.0",
+      },
+    });
+
+    if (!res.ok) {
+      return json({ ok: false, error: `Giphy API error: ${res.status}` }, res.status >= 500 ? 502 : res.status);
+    }
+
+    const data = await res.json<{
+      data?: Array<{
+        id: string;
+        title: string;
+        images?: {
+          fixed_height?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
+          fixed_width_small?: { url?: string; webp?: string; width?: string; height?: string };
+          original?: { url?: string; webp?: string; mp4?: string; width?: string; height?: string };
+        };
+      }>;
+    }>();
+
+    const gifs: GiphyGifItem[] = (data.data || []).map((item) => {
+      const fixed = item.images?.fixed_height || item.images?.original;
+      const small = item.images?.fixed_width_small || item.images?.fixed_height;
+      return {
+        id: item.id,
+        title: (item.title || "Cinema GIF").replace(/ GIF.*$/i, "").trim(),
+        previewUrl: small?.webp || small?.url || `https://media.giphy.com/media/${item.id}/200w.gif`,
+        mediaUrl: fixed?.webp || fixed?.url || `https://media.giphy.com/media/${item.id}/giphy.gif`,
+        mp4Url: fixed?.mp4,
+        width: Number(fixed?.width) || 200,
+        height: Number(fixed?.height) || 200,
+      };
+    });
+
+    const response = json({ ok: true, gifs });
+    response.headers.set("Cache-Control", "public, max-age=60, s-maxage=60");
+    return response;
+  } catch {
+    return json({ ok: false, error: "Failed to reach Giphy service." }, 502);
+  }
+}
+
+async function searchGiphy(request: Request, env: Env, url: URL): Promise<Response> {
+  await bearerUser(request, env);
+  const q = (url.searchParams.get("q") || "").trim();
+  const offset = String(Math.max(0, parseInt(url.searchParams.get("offset") || "0", 10)));
+  if (!q) {
+    return fetchGiphy(env, "trending", { offset });
+  }
+  return fetchGiphy(env, "search", { q, offset });
+}
+
+async function trendingGiphy(request: Request, env: Env, url: URL): Promise<Response> {
+  await bearerUser(request, env);
+  const offset = String(Math.max(0, parseInt(url.searchParams.get("offset") || "0", 10)));
+  return fetchGiphy(env, "trending", { offset });
+}
+
 function positiveInteger(value: unknown, name: string, maximum = Number.MAX_SAFE_INTEGER): number {
   const number = Number(value);
   if (!Number.isSafeInteger(number) || number < 1 || number > maximum) fail(400, `${name} must be a positive integer.`);
@@ -3271,6 +3358,8 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === "POST" && url.pathname === "/api/ws-ticket") return issueTicket(request, env);
   if (method === "POST" && url.pathname === "/api/meshcast/create-stream") return createMeshcastStream();
   if (method === "GET" && url.pathname === "/api/emojis") return emojiCatalog(request, env);
+  if (method === "GET" && url.pathname === "/api/giphy/search") return searchGiphy(request, env, url);
+  if (method === "GET" && url.pathname === "/api/giphy/trending") return trendingGiphy(request, env, url);
   if (method === "POST" && url.pathname === "/api/admin/emojis") return uploadEmoji(request, env);
   const emojiImage = url.pathname.match(/^\/api\/emojis\/([0-9a-fA-F-]{36})\/image$/);
   if (method === "GET" && emojiImage && SESSION_ID.test(emojiImage[1])) return serveEmoji(request, env, emojiImage[1].toLowerCase());

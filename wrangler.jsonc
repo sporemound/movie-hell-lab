@@ -36,7 +36,8 @@
     "MODERATOR_USER_IDS": "",
     "APPROVAL_THRESHOLD": "2",
     "DISCORD_GUILD_ID": "",
-    "ADMIN_DISCORD_USER_IDS": ""
+    "ADMIN_DISCORD_USER_IDS": "",
+    "GIPHY_API_KEY": ""
   },
   "observability": {
     "enabled": true,
